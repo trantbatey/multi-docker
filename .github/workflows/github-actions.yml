@@ -1,0 +1,44 @@
+name: Github to Docker Hub
+on:
+  push:
+    branches: [ master ]
+    
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v2
+    - name: build docker image for client
+      run: docker build -t trantbatey/react-test -f ./client/Dockerfile.dev ./client
+    - name: run client test
+      run: docker run -e CI=true trantbatey/react-test npm run test
+    
+  build:
+    needs: test
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v2
+    - name: set the process types
+      run: cp client/Dockerfile client/Dockerfile.web; cp nginx/Dockerfile nginx/Dockerfile.dbserver; cp server/Dockerfile server/Dockerfile.server; cp worker/Dockerfile worker/Dockerfile.worker
+    - name: build client image 
+      run: docker build -t trantbatey/multi-client ./client
+    - name: build server image 
+      run: docker build -t trantbatey/multi-server ./server
+    - name: build worker image 
+      run: docker build -t trantbatey/multi-worker ./worker
+    - name: build nginx image 
+      run: docker build -t trantbatey/multi-nginx ./nginx
+    - name: Login to Heroku Container registry
+      env: 
+        HEROKU_API_KEY: ${{ secrets.HEROKU_API_KEY }}
+      run: heroku container:login 
+    - name: push
+      env:
+        HEROKU_API_KEY: ${{ secrets.HEROKU_API_KEY }}
+      run: heroku container:push web dbserver server worker --recursive --app=trant-multi-docker
+    - name: release
+      env:
+        HEROKU_API_KEY: ${{ secrets.HEROKU_API_KEY }}
+      run: heroku container:release web dbserver server worker --app=trant-multi-docker
+
