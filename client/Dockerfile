@@ -1,5 +1,7 @@
 FROM node:16-alpine as builder
 
+ARG PORT
+
 RUN mkdir -p /app
 WORKDIR '/app'
 
@@ -9,12 +11,7 @@ COPY ./ ./
 RUN npm run build
 EXPOSE 3000
 
-FROM nginx
-RUN if [ "$PORT" = "" ]; then export PORT=2080; fi 
-RUN export DOCKER_CLIENT_TIMEOUT=120; export COMPOSE_HTTP_TIMEOUT=120
-COPY ./nginx/default.conf /etc/nginx/conf.d/default.conf.template
-COPY docker-entrypoint.sh /
-ENTRYPOINT ["/docker-entrypoint.sh"]
-RUN ["chmod", "+x", "/docker-entrypoint.sh"]
-CMD ["nginx", "-g", "daemon off;"]
+FROM nginx:alpine
 COPY --from=builder /app/build /usr/share/nginx/html
+COPY ./nginx/default.conf /etc/nginx/conf.d/default.conf
+CMD sed -i -e 's/$PORT/'"$PORT"'/g' /etc/nginx/conf.d/default.conf && nginx -g 'daemon off;'

@@ -9,7 +9,7 @@ jobs:
     steps:
     - uses: actions/checkout@v2
     - name: build docker image for client
-      run: docker build -t trantbatey/react-test -f ./client/Dockerfile.dev ./client
+      run: docker build -t trantbatey/react-test -f ./client/Dockerfile ./client
     - name: run client test
       run: docker run -e CI=true trantbatey/react-test npm run test
     
