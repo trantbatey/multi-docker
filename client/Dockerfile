@@ -1,7 +1,6 @@
 FROM node:16-alpine as builder
 
 ENV PORT=2080
-RUN rm /bin/sh && ln -s /bin/bash /bin/sh
 
 RUN mkdir -p /app
 WORKDIR '/app'
