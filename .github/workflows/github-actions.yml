@@ -1,7 +1,7 @@
 name: Github to Docker Hub
 on:
   push:
-    branches: [ heroku-deploy ]
+    branches: [ master ]
     
 jobs:
   test:
