@@ -36,8 +36,8 @@ jobs:
     - name: push
       env:
         HEROKU_API_KEY: ${{ secrets.HEROKU_API_KEY }}
-      run: heroku container:push client web server worker --recursive --app=trant-multi-docker
+      run: heroku container:push client web server worker --recursive --app=trant-test-app
     - name: release
       env:
         HEROKU_API_KEY: ${{ secrets.HEROKU_API_KEY }}
-      run: heroku container:release client web server worker --app=trant-multi-docker
+      run: heroku container:release client web server worker --app=trant-test-app
