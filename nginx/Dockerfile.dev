@@ -1,3 +1,2 @@
 FROM nginx
-RUN if [ "$PORT" = "" ]; then export PORT=2080; fi 
 COPY ./default.conf /etc/nginx/conf.d/default.conf
