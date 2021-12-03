@@ -1,7 +1,7 @@
 name: Github to Docker Hub
 on:
   push:
-    branches: [ master ]
+    branches: [ aws-deploy ]
     
 jobs:
   test:
@@ -13,31 +13,25 @@ jobs:
     - name: run client test
       run: docker run -e CI=true trantbatey/react-test npm run test
     
-  build:
+  # .github/workflows/aws-deploy.yml
+  aws-deploy:
     needs: test
     runs-on: ubuntu-latest
     steps:
-    - name: Checkout
-      uses: actions/checkout@v2
-    - name: set the process types
-      run: cp client/Dockerfile client/Dockerfile.client; cp nginx/Dockerfile nginx/Dockerfile.web; cp server/Dockerfile server/Dockerfile.server; cp worker/Dockerfile worker/Dockerfile.worker
-    - name: build client image 
-      run: docker build -t trantbatey/multi-client ./client
-    - name: build server image 
-      run: docker build -t trantbatey/multi-server ./server
-    - name: build worker image 
-      run: docker build -t trantbatey/multi-worker ./worker
-    - name: build nginx image 
-      run: docker build -t trantbatey/multi-nginx ./nginx
-    - name: Login to Heroku Container registry
-      env: 
-        HEROKU_API_KEY: ${{ secrets.HEROKU_API_KEY }}
-      run: heroku container:login 
-    - name: push
-      env:
-        HEROKU_API_KEY: ${{ secrets.HEROKU_API_KEY }}
-      run: heroku container:push client web server worker --recursive --app=trant-multi-docker
-    - name: release
-      env:
-        HEROKU_API_KEY: ${{ secrets.HEROKU_API_KEY }}
-      run: heroku container:release client web server worker --app=trant-multi-docker
+
+      - name: Checkout source code
+        uses: actions/checkout@v2
+
+      - name: Generate deployment package
+        run: zip -r deploy.zip . -x '*.git*'
+
+      - name: Deploy to EB
+        uses: einaregilsson/beanstalk-deploy@v18
+        with:
+          aws_access_key: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws_secret_key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          application_name: multi-container
+          environment_name: Multicontainer-env
+          version_label: 1.0
+          region: us-east-2
+          deployment_package: deploy.zip
